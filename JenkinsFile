@@ -1,0 +1,95 @@
+pipeline{
+    agent any
+    parameters {
+        string(name: 'deploymentId', defaultValue: '')
+    }
+    environment{
+        AWS_ACCESS_KEY = credentials('AWS_ACCESS_KEY')
+        AWS_SECRET_KEY = credentials('AWS_SECRET_KEY')
+        AWS_REGION = credentials('AWS_REGION')
+    }
+    stages{
+         stage("Init"){
+            steps{
+                echo "======== Executing Init ========"
+                dir('./'){
+                    script{
+                        try { 
+                            def file ="./.terraform/terraform.tfstate"
+                            def fileFound = fileExists(file)
+                            // TODO add ! 
+                            // if(!fileExists(file)){
+                            sh "terraform --version"
+                            sh "terraform init"
+                            sh "terraform validate"
+                            // }
+                            // else {
+                                // echo "======== Skip Init ========"
+                            // }
+                        } catch (Exception err){
+                            println(err)
+                        }
+                    }
+                }
+            }
+        }
+         stage("Plan"){
+            steps{
+                echo "======== Executing Plan ========"
+                dir('./'){
+                    script{
+                        try { 
+                            def file ="./.terraform/terraform.tfstate"
+                            def fileFound = fileExists(file)
+                            // TODO add ! 
+                            // if(!fileExists(file)){
+                            sh "terraform plan \
+                            -var 'id=${params.deploymentId}' \
+                            -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+                            -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+                            -var 'aws_region=${AWS_REGION}' \
+                            -out ${params.deploymentId}-apply.tfplan"
+                            stash name: "terraform-plan", includes: "${params.deploymentId}-apply.tfplan"
+                            // }
+                            // else {
+                                // echo "======== Skip Init ========"
+                            // }
+                        } catch (Exception err){
+                            println(err)
+                        }
+                    }
+                }
+            }
+        }
+        stage("Apply"){
+            steps{
+                echo "======== Executing Apply ========"
+                script {
+                    def apply = false
+                    try {
+                        input message: 'Confirm Apply', ok: 'Apply Config'
+                        apply = true
+                    } catch (Exception err) {
+                        dir('/terraform/app/aws/custom/state'){
+                            sh "terraform destroy \
+                            -var 'id=${params.deploymentId}' \
+                            -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+                            -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+                            -var 'aws_region=${AWS_REGION}' \
+                            -auto-approve"
+                        }
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                    if(apply){
+                        dir('./'){
+                            unstash "terraform-plan"
+                            sh "terraform apply ${params.deploymentId}-apply.tfplan"
+                            sh "terraform output -json > ${params.deploymentId}-output.json"
+                            sh "python3 /terraform/app/util/deployment.py status ${params.deploymentId}"
+                        }
+                    }
+                }
+        }
+        }
+    }
+}
