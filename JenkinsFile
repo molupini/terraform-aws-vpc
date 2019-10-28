@@ -70,13 +70,15 @@ pipeline{
                         input message: 'Confirm Apply', ok: 'Apply Config'
                         apply = true
                     } catch (Exception err) {
-                        dir('/terraform/app/aws/custom/state'){
+                        dir('./'){
                             sh "terraform destroy \
                             -var 'id=${params.deploymentId}' \
                             -var 'aws_access_key=${AWS_ACCESS_KEY}' \
                             -var 'aws_secret_key=${AWS_SECRET_KEY}' \
                             -var 'aws_region=${AWS_REGION}' \
                             -auto-approve"
+                            sh "terraform output -json > ${params.deploymentId}-output.json"
+                            sh "python3 /terraform/app/util/deployment.py status ${params.deploymentId}"
                         }
                         currentBuild.result = 'UNSTABLE'
                     }
