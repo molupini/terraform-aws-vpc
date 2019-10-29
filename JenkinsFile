@@ -78,7 +78,7 @@ pipeline{
                             -var 'aws_region=${AWS_REGION}' \
                             -auto-approve"
                             sh "terraform output -json > ${params.deploymentId}-output.json"
-                            sh "python3 /terraform/app/util/deployment.py status ${params.deploymentId}"
+                            sh "python3 /util/helper.py status ${params.deploymentId}"
                         }
                         currentBuild.result = 'UNSTABLE'
                     }
@@ -87,7 +87,7 @@ pipeline{
                             unstash "terraform-plan"
                             sh "terraform apply ${params.deploymentId}-apply.tfplan"
                             sh "terraform output -json > ${params.deploymentId}-output.json"
-                            sh "python3 /terraform/app/util/deployment.py status ${params.deploymentId}"
+                            sh "python3 /util/helper.py status ${params.deploymentId}"
                         }
                     }
                 }
