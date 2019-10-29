@@ -15,16 +15,20 @@ pipeline{
                 echo "======== Clone Repo ========"
                 dir('./'){
                     script{
-                        try { 
-                            sh "cd ./tfvpc"
-                        } catch (Exception err){
-                            println(err)
-                            sh "mkdir ./${params.deploymentId}"
-                            sh "cd ./${params.deploymentId}"
+                        try {
+                            def file ="./tfvpc"
+                            def fileFound = fileExists(file)
+                            if(fileFound){
+                                sh "rm -R ./tfvpc/ -f"
+                            }
+                            // sh "mkdir ./${params.deploymentId}"
+                            // sh "cd ./${params.deploymentId}"
                             sh "git init"
                             sh "git config remote.origin.url git@gitlab.com:bcx-sanlam-group/tfvpc.git"
                             sh "git --version"
-                            sh "git clone git@gitlab.com:bcx-sanlam-group/tfvpc.git"
+                            sh "git clone git@gitlab.com:bcx-sanlam-group/tfvpc.git" 
+                        } catch (Exception err){
+                            println(err)
                         }
                     }
                 }
@@ -36,9 +40,9 @@ pipeline{
                 dir('./tfvpc/bin'){
                     script{
                         try { 
-                            sh "BUCKET=`python3 ./util/helper/deployment.py state ${deploymentId} S3`"
-                            sh "DYNAMODB_TABLE=`python3 ./util/helper/deployment.py state ${deploymentId} DYN`"
-                            sh "DIR=`python3 ./util/helper/deployment.py wsdir ${deploymentId}`"
+                            sh "BUCKET=`python3 ./util/helper.py state ${deploymentId} S3`"
+                            sh "DYNAMODB_TABLE=`python3 ./util/helper.py state ${deploymentId} DYN`"
+                            sh "DIR=`python3 ./util/helper.py wsdir ${deploymentId}`"
                             println('DIR =')
                             println(DIR)
                             sh "terraform init -input=false \
