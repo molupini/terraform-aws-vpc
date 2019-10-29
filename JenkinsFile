@@ -10,27 +10,32 @@ pipeline{
         GIT_REPO = credentials('molupiniGitLab')
     }
     stages{
-        //  stage("Check-out"){
-        //     steps{
-        //         echo "======== Executing Check-out ========"
-        //         dir('${JENKINS_HOME}/workspace'){
-        //             script{
-        //                 try { 
-        //                     // TODO add ! 
-        //                     // if(!fileExists(file)){
-        //                     // sh "git clone https://gitlab.com/bcx-sanlam-group/tfremotestate.git"
-        //                     // checkout()
-        //                     // }
-        //                     // else {
-        //                         // echo "======== Skip Init ========"
-        //                     // }
-        //                 } catch (Exception err){
-        //                     println(err)
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+         stage("Clone"){
+            steps{
+                echo "======== Executing Clone ========"
+                dir('${env.JENKINS_HOME}/workspace/${env.WORKSPACE}'){
+                    script{
+                        try { 
+                            // TODO add ! 
+                            // if(!fileExists(file)){
+                            // mkdir -p /var/jenkins_home/workspace/test-workspace
+                            // cd /var/jenkins_home/workspace/test-workspace
+                            sh "git init"
+                            sh "git config remote.origin.url git@gitlab.com:bcx-sanlam-group/tfremotestate.git"
+                            sh "git --version"
+                            sh "git fetch --force --progress git@gitlab.com:bcx-sanlam-group/tfremotestate.git"
+                            sh "git clone https://gitlab.com/bcx-sanlam-group/tfremotestate.git"
+                            }
+                            // else {
+                                // echo "======== Skip Init ========"
+                            // }
+                        } catch (Exception err){
+                            println(err)
+                        }
+                    }
+                }
+            }
+        }
          stage("Init"){
             steps{
                 echo "======== Executing Init ========"

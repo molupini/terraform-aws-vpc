@@ -10,6 +10,6 @@ services:
       # volumes:
       #   - ./bin/.:/app
       env_file:
-        - ./.env/app.development.env
+        - ./.env/app.env
       stdin_open: true
       tty: true
