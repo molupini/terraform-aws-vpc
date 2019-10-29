@@ -18,7 +18,7 @@ Uses a number of open source projects to work properly:
 # Installation
 
 
-#### Install
+#### Prep
 
 Open your favorite Terminal and run these commands.
 
@@ -55,7 +55,7 @@ AWS_REGION=eu-west-1
 ```
 
 
-### Deploy
+### Test
 
 Easily done in a Docker container.
 Make required changes within Dockerfile + compose files if necessary. When ready, simply use docker-compose to build your environment.
