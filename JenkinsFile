@@ -10,27 +10,27 @@ pipeline{
         GIT_REPO = credentials('molupiniGitLab')
     }
     stages{
-         stage("Check-out"){
-            steps{
-                echo "======== Executing Check-out ========"
-                dir('${JENKINS_HOME}/workspace'){
-                    script{
-                        try { 
-                            // TODO add ! 
-                            // if(!fileExists(file)){
-                            // sh "git clone https://gitlab.com/bcx-sanlam-group/tfremotestate.git"
-                            // checkout()
-                            // }
-                            // else {
-                                // echo "======== Skip Init ========"
-                            // }
-                        } catch (Exception err){
-                            println(err)
-                        }
-                    }
-                }
-            }
-        }
+        //  stage("Check-out"){
+        //     steps{
+        //         echo "======== Executing Check-out ========"
+        //         dir('${JENKINS_HOME}/workspace'){
+        //             script{
+        //                 try { 
+        //                     // TODO add ! 
+        //                     // if(!fileExists(file)){
+        //                     // sh "git clone https://gitlab.com/bcx-sanlam-group/tfremotestate.git"
+        //                     // checkout()
+        //                     // }
+        //                     // else {
+        //                         // echo "======== Skip Init ========"
+        //                     // }
+        //                 } catch (Exception err){
+        //                     println(err)
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
          stage("Init"){
             steps{
                 echo "======== Executing Init ========"
