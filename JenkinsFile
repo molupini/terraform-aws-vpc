@@ -16,7 +16,7 @@ pipeline{
                 dir('./'){
                     script{
                         try { 
-                            sh "cd ./${params.deploymentId}"
+                            sh "cd ./tfvpc"
                         } catch (Exception err){
                             println(err)
                             sh "mkdir ./${params.deploymentId}"
@@ -38,7 +38,7 @@ pipeline{
                         try { 
                             sh "BUCKET=`python3 ./util/helper/deployment.py state ${deploymentId} S3`"
                             sh "DYNAMODB_TABLE=`python3 ./util/helper/deployment.py state ${deploymentId} DYN`"
-                            sh "DIR=`python3 ./util/helper/deployment.py wsdir ${deploymentId}`
+                            sh "DIR=`python3 ./util/helper/deployment.py wsdir ${deploymentId}`"
                             println('DIR =')
                             println(DIR)
                             sh "terraform init -input=false \
