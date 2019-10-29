@@ -1,4 +1,4 @@
-# REMOTE STATE MODULE
+# VPC MODULE
 
 Powered by Terraform.
 
@@ -7,7 +7,7 @@ Powered by Terraform.
 # Features
 
 You can:
-  - Build, remote state
+  - Build, VPC
 
 # Tech
 
@@ -32,7 +32,7 @@ $ git init
 ```
 Third:
 ```sh
-$ git clone git@gitlab.com/bcx-sanlam-group/tfremotestate.git 
+$ git clone git@gitlab.com/bcx-sanlam-group/tfvpc.git 
 ```
 
 #### Author
