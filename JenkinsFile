@@ -10,7 +10,7 @@ pipeline{
         TF_IN_AUTOMATION = "true"
     }
     stages{
-         stage("Clone"){
+        stage("Clone"){
             steps{
                 echo "======== Clone Repo ========"
                 dir('./'){
@@ -22,24 +22,30 @@ pipeline{
                             sh "mkdir ./${params.deploymentId}"
                             sh "cd ./${params.deploymentId}"
                             sh "git init"
-                            sh "git config remote.origin.url git@gitlab.com:bcx-sanlam-group/tfremotestate.git"
+                            sh "git config remote.origin.url git@gitlab.com:bcx-sanlam-group/tfvpc.git"
                             sh "git --version"
-                            sh "git clone git@gitlab.com:bcx-sanlam-group/tfremotestate.git"
+                            sh "git clone git@gitlab.com:bcx-sanlam-group/tfvpc.git"
                         }
                     }
                 }
             }
         }
-         stage("Init"){
+        stage("Init"){
             steps{
                 echo "======== Executing Init ========"
-                dir('./tfremotestate/bin'){
+                dir('./tfvpc/bin'){
                     script{
                         try { 
-                            def file ="./.terraform/terraform.tfstate"
-                            def fileFound = fileExists(file)
-                            sh "terraform --version"
-                            sh "terraform init"
+                            sh "BUCKET=`python3 ./util/helper/deployment.py state ${deploymentId} S3`"
+                            sh "DYNAMODB_TABLE=`python3 ./util/helper/deployment.py state ${deploymentId} DYN`"
+                            sh "DIR=`python3 ./util/helper/deployment.py wsdir ${deploymentId}`
+                            println('DIR =')
+                            println(DIR)
+                            sh "terraform init -input=false \
+                                -backend-config='bucket=${BUCKET}' \
+                                -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
+                                -backend-config='access_key=${AWS_ACCESS_KEY}' \
+                                -backend-config='secret_key=${AWS_SECRET_KEY}'"
                             sh "terraform validate"
                         } catch (Exception err){
                             println(err)
@@ -49,60 +55,60 @@ pipeline{
                 }
             }
         }
-         stage("Plan"){
-            steps{
-                echo "======== Executing Plan ========"
-                dir('./tfremotestate/bin'){
-                    script{
-                        try { 
-                            def file ="./.terraform/terraform.tfstate"
-                            def fileFound = fileExists(file)
-                            sh "terraform plan \
-                            -var 'id=${params.deploymentId}' \
-                            -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                            -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                            -var 'aws_region=${AWS_REGION}' \
-                            -out ${params.deploymentId}-apply.tfplan"
-                            stash name: "terraform-plan", includes: "${params.deploymentId}-apply.tfplan"
-                        } catch (Exception err){
-                            println(err)
-                            throw new Exception("Unable perform plan, try again!")
-                        }
-                    }
-                }
-            }
-        }
-        stage("Apply"){
-            steps{
-                echo "======== Executing Apply ========"
-                script {
-                    def apply = false
-                    try {
-                        input message: 'Confirm Apply', ok: 'Apply Config'
-                        apply = true
-                    } catch (Exception err) {
-                        dir('./tfremotestate/bin'){
-                            sh "terraform destroy \
-                            -var 'id=${params.deploymentId}' \
-                            -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                            -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                            -var 'aws_region=${AWS_REGION}' \
-                            -auto-approve"
-                            sh "terraform output -json > ${params.deploymentId}-output.json"
-                            sh "python3 ./util/helper.py status ${params.deploymentId}"
-                        }
-                        currentBuild.result = 'UNSTABLE'
-                    }
-                    if(apply){
-                        dir('./tfremotestate/bin'){
-                            unstash "terraform-plan"
-                            sh "terraform apply ${params.deploymentId}-apply.tfplan"
-                            sh "terraform output -json > ${params.deploymentId}-output.json"
-                            sh "python3 ./util/helper.py status ${params.deploymentId}"
-                        }
-                    }
-                }
-        }
-        }
+        // stage("Plan"){
+        //     steps{
+        //         echo "======== Executing Plan ========"
+        //         dir('./tfvpc/bin'){
+        //             script{
+        //                 try { 
+        //                     def file ="./.terraform/terraform.tfstate"
+        //                     def fileFound = fileExists(file)
+        //                     sh "terraform plan \
+        //                     -var 'id=${params.deploymentId}' \
+        //                     -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+        //                     -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+        //                     -var 'aws_region=${AWS_REGION}' \
+        //                     -out ${params.deploymentId}-apply.tfplan"
+        //                     stash name: "terraform-plan", includes: "${params.deploymentId}-apply.tfplan"
+        //                 } catch (Exception err){
+        //                     println(err)
+        //                     throw new Exception("Unable perform plan, try again!")
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        // stage("Apply"){
+        //     steps{
+        //         echo "======== Executing Apply ========"
+        //         script {
+        //             def apply = false
+        //             try {
+        //                 input message: 'Confirm Apply', ok: 'Apply Config'
+        //                 apply = true
+        //             } catch (Exception err) {
+        //                 dir('./tfvpc/bin'){
+        //                     sh "terraform destroy \
+        //                     -var 'id=${params.deploymentId}' \
+        //                     -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+        //                     -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+        //                     -var 'aws_region=${AWS_REGION}' \
+        //                     -auto-approve"
+        //                     sh "terraform output -json > ${params.deploymentId}-output.json"
+        //                     sh "python3 ./util/helper.py status ${params.deploymentId}"
+        //                 }
+        //                 currentBuild.result = 'UNSTABLE'
+        //             }
+        //             if(apply){
+        //                 dir('./tfvpc/bin'){
+        //                     unstash "terraform-plan"
+        //                     sh "terraform apply ${params.deploymentId}-apply.tfplan"
+        //                     sh "terraform output -json > ${params.deploymentId}-output.json"
+        //                     sh "python3 ./util/helper.py status ${params.deploymentId}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
