@@ -7,30 +7,23 @@ pipeline{
         AWS_ACCESS_KEY = credentials('AWS_ACCESS_KEY')
         AWS_SECRET_KEY = credentials('AWS_SECRET_KEY')
         AWS_REGION = credentials('AWS_REGION')
-        GIT_REPO = credentials('molupiniGitLab')
     }
     stages{
          stage("Clone"){
             steps{
-                echo "======== Executing Clone ========"
-                dir('${env.JENKINS_HOME}/workspace/${env.WORKSPACE}'){
+                echo "======== Clone Repo ========"
+                dir('./'){
                     script{
                         try { 
-                            // TODO add ! 
-                            // if(!fileExists(file)){
-                            // mkdir -p /var/jenkins_home/workspace/test-workspace
-                            // cd /var/jenkins_home/workspace/test-workspace
+                            sh "cd ./${params.deploymentId}"
+                        } catch (Exception err){
+                            println(err)
+                            sh "mkdir ./${params.deploymentId}"
+                            sh "cd ./${params.deploymentId}"
                             sh "git init"
                             sh "git config remote.origin.url git@gitlab.com:bcx-sanlam-group/tfremotestate.git"
                             sh "git --version"
-                            sh "git fetch --force --progress git@gitlab.com:bcx-sanlam-group/tfremotestate.git"
-                            sh "git clone https://gitlab.com/bcx-sanlam-group/tfremotestate.git"
-                            }
-                            // else {
-                                // echo "======== Skip Init ========"
-                            // }
-                        } catch (Exception err){
-                            println(err)
+                            sh "git clone git@gitlab.com:bcx-sanlam-group/tfremotestate.git"
                         }
                     }
                 }
@@ -44,17 +37,12 @@ pipeline{
                         try { 
                             def file ="./.terraform/terraform.tfstate"
                             def fileFound = fileExists(file)
-                            // TODO add ! 
-                            // if(!fileExists(file)){
                             sh "terraform --version"
                             sh "terraform init"
                             sh "terraform validate"
-                            // }
-                            // else {
-                                // echo "======== Skip Init ========"
-                            // }
                         } catch (Exception err){
                             println(err)
+                            throw new Exception("Unable to perform init, try again!")
                         }
                     }
                 }
@@ -68,8 +56,6 @@ pipeline{
                         try { 
                             def file ="./.terraform/terraform.tfstate"
                             def fileFound = fileExists(file)
-                            // TODO add ! 
-                            // if(!fileExists(file)){
                             sh "terraform plan \
                             -var 'id=${params.deploymentId}' \
                             -var 'aws_access_key=${AWS_ACCESS_KEY}' \
@@ -77,12 +63,9 @@ pipeline{
                             -var 'aws_region=${AWS_REGION}' \
                             -out ${params.deploymentId}-apply.tfplan"
                             stash name: "terraform-plan", includes: "${params.deploymentId}-apply.tfplan"
-                            // }
-                            // else {
-                                // echo "======== Skip Init ========"
-                            // }
                         } catch (Exception err){
                             println(err)
+                            throw new Exception("Unable perform plan, try again!")
                         }
                     }
                 }

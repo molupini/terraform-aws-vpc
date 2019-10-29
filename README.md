@@ -83,7 +83,8 @@ Verify terraform source files
 $ terraform init
 $ terraform fmt
 $ terraform validate
-$ terraform plan -var 'id=5db3181d169cd3001dfd61ab' -var 'aws_access_key=****' -var 'aws_secret_key=****' -var 'aws_region=eu-west-1'
+$ terraform plan -var 'id=
+' -var 'aws_access_key=****' -var 'aws_secret_key=****' -var 'aws_region=eu-west-1'
 $ terraform apply -var 'id=5db3181d169cd3001dfd61ab' -var 'aws_access_key=****' -var 'aws_secret_key=****' -var 'aws_region=eu-west-1'
 $ terraform destroy -var 'id=5db3181d169cd3001dfd61ab' -var 'aws_access_key=****' -var 'aws_secret_key=****' -var 'aws_region=eu-west-1'
 ```
