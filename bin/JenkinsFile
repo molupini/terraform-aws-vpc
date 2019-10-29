@@ -12,7 +12,7 @@ pipeline{
          stage("Init"){
             steps{
                 echo "======== Executing Init ========"
-                dir('./'){
+                dir('./bin'){
                     script{
                         try { 
                             def file ="./.terraform/terraform.tfstate"
@@ -36,7 +36,7 @@ pipeline{
          stage("Plan"){
             steps{
                 echo "======== Executing Plan ========"
-                dir('./'){
+                dir('./bin'){
                     script{
                         try { 
                             def file ="./.terraform/terraform.tfstate"
@@ -70,7 +70,7 @@ pipeline{
                         input message: 'Confirm Apply', ok: 'Apply Config'
                         apply = true
                     } catch (Exception err) {
-                        dir('./'){
+                        dir('./bin'){
                             sh "terraform destroy \
                             -var 'id=${params.deploymentId}' \
                             -var 'aws_access_key=${AWS_ACCESS_KEY}' \
@@ -83,7 +83,7 @@ pipeline{
                         currentBuild.result = 'UNSTABLE'
                     }
                     if(apply){
-                        dir('./'){
+                        dir('./bin'){
                             unstash "terraform-plan"
                             sh "terraform apply ${params.deploymentId}-apply.tfplan"
                             sh "terraform output -json > ${params.deploymentId}-output.json"
