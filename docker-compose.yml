@@ -1,0 +1,15 @@
+version: "2.4"
+
+services:
+  iac-terra:
+      build:
+        context: .
+        target: dev
+        dockerfile: ./terraform.Dockerfile
+      # TODO ISSUE ATTACHING VOL RATHER COPY
+      # volumes:
+      #   - ./bin/.:/app
+      env_file:
+        - ./.env/app.development.env
+      stdin_open: true
+      tty: true
