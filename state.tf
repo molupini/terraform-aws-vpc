@@ -9,7 +9,7 @@ data "aws_iam_user" "run-user" {
 # template - polices
 ##########################################################
 data "template_file" "s3-policy" {
-  template = file("../../templates/aws-s3-policy.tpl")
+  template = file("./templates/aws-s3-policy.tpl")
 
   vars = {
     admin-user-arn = aws_iam_user.admin-user.arn
@@ -20,7 +20,7 @@ data "template_file" "s3-policy" {
 }
 
 data "template_file" "admin-user-policy" {
-  template = file("../../templates/aws-admin-user.tpl")
+  template = file("./templates/aws-admin-user.tpl")
 
   vars = {
     s3-bucket-arn = aws_s3_bucket.s3_state.arn
@@ -29,7 +29,7 @@ data "template_file" "admin-user-policy" {
 }
 
 data "template_file" "read-user-policy" {
-  template = file("../../templates/aws-read-user.tpl")
+  template = file("./templates/aws-read-user.tpl")
 
   vars = {
     s3-bucket-arn = aws_s3_bucket.s3_state.arn
