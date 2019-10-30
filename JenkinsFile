@@ -60,7 +60,7 @@ pipeline{
                             // sh "terraform validate"
                         } catch (Exception err){
                             println(err)
-                            throw new Exception("Unable to perform init, try again!")
+                            // throw new Exception("Unable to perform init, try again!")
                         }
                     }
                 }

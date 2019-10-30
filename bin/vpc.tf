@@ -69,9 +69,9 @@ module "vpc" {
 module "get_subnet" {
   source = "./get_subnet"
 
-  aws_access_key = var.aws_access_key
-  aws_secret_key = var.aws_secret_key
-  aws_region     = var.aws_region
+  # aws_access_key = var.aws_access_key
+  # aws_secret_key = var.aws_secret_key
+  # aws_region     = var.aws_region
   vpcId          = module.vpc.vpc_id
   perimeter      = "default"
   id             = var.id
