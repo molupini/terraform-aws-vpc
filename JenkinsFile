@@ -40,17 +40,24 @@ pipeline{
                 dir('./tfvpc/bin'){
                     script{
                         try { 
-                            sh "BUCKET=`python3 ./util/helper.py state ${deploymentId} S3`"
-                            sh "DYNAMODB_TABLE=`python3 ./util/helper.py state ${deploymentId} DYN`"
-                            // sh "DIR=`python3 ./util/helper.py wsdir ${deploymentId}`"
+                            sh "unset BUCKET"
+                            sh "unset DYNAMODB_TABLE"
+                            // sh "unset DIR"
+                            sh "export BUCKET=`python3 ./util/helper.py state ${deploymentId} S3`"
+                            sh "export DYNAMODB_TABLE=`python3 ./util/helper.py state ${deploymentId} DYN`"
+                            def BUCKET = "${env.BUCKET}"
+                            def DYNAMODB_TABLE = "${env.DYNAMODB_TABLE}"
+                            // sh "export DIR=`python3 ./util/helper.py wsdir ${deploymentId}`"
                             // println('DIR =')
                             // println(DIR)
                             sh "terraform init -input=false \
-                                -backend-config='bucket=`python3 ./util/helper.py state ${deploymentId} S3`' \
-                                -backend-config='dynamodb_table=`python3 ./util/helper.py state ${deploymentId} DYN`' \
+                                -backend-config='bucket=${env.BUCKET}' \
+                                -backend-config='dynamodb_table=${env.DYNAMODB_TABLE}' \
                                 -backend-config='access_key=${AWS_ACCESS_KEY}' \
-                                -backend-config='secret_key=${AWS_SECRET_KEY}'"
-                            sh "terraform validate"
+                                -backend-config='secret_key=${AWS_SECRET_KEY}' \
+                                -backend-config='region=${AWS_REGION}' \
+                                -reconfigure"
+                            // sh "terraform validate"
                         } catch (Exception err){
                             println(err)
                             throw new Exception("Unable to perform init, try again!")
