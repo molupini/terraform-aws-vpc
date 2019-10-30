@@ -67,7 +67,7 @@ module "vpc" {
 }
 
 module "get_subnet" {
-  source = "./get/subnet"
+  source = "./get_subnet"
 
   aws_access_key = var.aws_access_key
   aws_secret_key = var.aws_secret_key
