@@ -8,6 +8,8 @@ pipeline{
         AWS_ACCESS_KEY = credentials("AWS_ACCESS_KEY")
         AWS_SECRET_KEY = credentials("AWS_SECRET_KEY")
         // AWS_REGION = credentials("AWS_REGION")
+        S3 = "python3 ./util/helper.py state ${params.deploymentId} S3"
+        NOSQL = "python3 ./util/helper.py state ${params.deploymentId} DYN"
         AWS_REGION = "eu-west-1"
         TF_IN_AUTOMATION = "true"
     }
@@ -44,6 +46,8 @@ pipeline{
                             // PARAMS
                             def s3 = sh(script: "python3 ./util/helper.py state ${params.deploymentId} S3", returnStdout: true)
                             def dyn = sh(script: "python3 ./util/helper.py state ${params.deploymentId} DYN", returnStdout: true)
+                            s3 = "bucket=${s3}"
+                            dyn = "dynamodb_table=${dyn}"
                             println("variables =")
                             println(s3)
                             println(dyn)
@@ -55,11 +59,11 @@ pipeline{
                             if(fileFound){
                                 sh "terraform init \
                                 -input=false \
-                                -backend-config=\"access_key=${AWS_ACCESS_KEY}\" \
-                                -backend-config=\"secret_key=${AWS_SECRET_KEY}\" \
-                                -backend-config=\"region=${AWS_REGION}\" \
-                                -backend-config=\"bucet=${s3}\" \
-                                -backend-config=\"dynamodb_table=${dyn}\" \
+                                -backend-config='access_key=${AWS_ACCESS_KEY}' \
+                                -backend-config='secret_key=${AWS_SECRET_KEY}' \
+                                -backend-config='region=${AWS_REGION}' \
+                                -backend-config='bucket=${S3}' \
+                                -backend-config='dynamodb_table=${NOSQL}' \
                                 -reconfigure \
                                 -plugin-dir ../../.terraform/plugins/linux_amd64"
                                 // -backend-config=\"bucket=${BUCKET}\" \
@@ -68,11 +72,11 @@ pipeline{
                             else {
                                 sh "terraform init \
                                 -input=false \
-                                -backend-config=\"access_key=${AWS_ACCESS_KEY}\" \
-                                -backend-config=\"secret_key=${AWS_SECRET_KEY}\" \
-                                -backend-config=\"region=${AWS_REGION}\" \
-                                -backend-config=\"bucet=${s3}\" \
-                                -backend-config=\"dynamodb_table=${dyn}\" \
+                                -backend-config='access_key=${AWS_ACCESS_KEY}' \
+                                -backend-config='secret_key=${AWS_SECRET_KEY}' \
+                                -backend-config='region=${AWS_REGION}' \
+                                -backend-config='bucket=${S3}' \
+                                -backend-config='dynamodb_table=${NOSQL}' \
                                 -reconfigure"
                                 // -backend-config=\"bucket=${BUCKET}\" \
                                 // -backend-config=\"dynamodb_table=${DYNAMODB_TABLE}\" \
