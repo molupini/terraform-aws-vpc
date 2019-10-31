@@ -118,6 +118,34 @@ class HttpFetch(object):
             raise KeyError(ke)
         return 1
 
+    def perimeter(self, id, element='', link='null'):
+        if link == 'null':
+            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
+            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
+            port = environ.get('IAC_ENDPOINT_PORT')
+            uri = f'{protocol}://{hostname}:{port}'
+        else:
+            uri = f'{link}'
+        url = f'{uri}/resources/query/{id}?document=perimeter'
+        # debugging
+        # print(url)
+
+        response = requests.get(url)
+        if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
+            err = {'error': f'perimeter query, web {response.status_code}'}
+            raise Exception(err)
+
+        perimeter = response.json()
+        if element != '':
+            try:
+                return json.dumps(perimeter['perimeter'][element])
+            except KeyError as ke:
+                return json.dumps(perimeter['perimeter']['default'])
+        elif perimeter:
+            return json.dumps(perimeter['perimeter'])
+        else:
+            raise 1
+
     # def wsdir(self, id):
     #     pwd = getcwd().replace('/', '-')
     #     return f'{id}{pwd}'
