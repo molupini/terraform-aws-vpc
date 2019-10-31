@@ -68,47 +68,6 @@ class HttpFetch(object):
         else:
             raise 1
 
-    # def status(self, id, link='null'):
-    #         if link == 'null':
-    #             protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-    #             hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-    #             port = environ.get('IAC_ENDPOINT_PORT')
-    #             uri = f'{protocol}://{hostname}:{port}'
-    #         else:
-    #             uri = f'{link}'
-    #         url = f'/resources/query/{id}?document=tagging'
-    #         n = 0
-    #         d = 0
-    #         # debugging
-    #         # print(url)
-    #         try:
-    #             file = open(f'./{id}-output.json', 'r').read()
-    #             print(file)
-    #             load = json.loads(file)
-    #             try:
-    #                 d = load['done']['value']
-    #                 a = load['application']['value']
-    #                 if (d == 0):
-    #                     inf = {'info': f'{id}, done={d}'}
-    #                     print(inf)
-    #                     n = 6
-    #                     url = f'{uri}/resources/status/{id}?state={n}&application={a}'
-    #             except KeyError as ke:
-    #                 err = {'error': f'{id}, KeyError {ke}'}
-    #                 print(err)
-    #                 n = 8
-    #                 url = f'{uri}/resources/status/{id}?state={n}'
-    #         except FileNotFoundError as fe:
-    #             err = {'error': f'{id}, FileNotFoundError {fe}'}
-    #             print(err)
-    #             n = 10
-    #             url = f'{uri}/resources/status/{id}?state={n}'
-    #         response = requests.get(url)
-    #         if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
-    #             err = {'error': f'resource state, web {response.status_code}'}
-    #             raise Exception(err)
-    #         return 0
-
     def status(self, id, code=0, app='null', link='null'):
             if link == 'null':
                 protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
@@ -126,19 +85,24 @@ class HttpFetch(object):
                 else:
                     url = f'{uri}/resources/status/{id}?state={code}'
                 response = requests.get(url)
-            if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
-                err = {'error': f'resource state, web {response.status_code}'}
-                raise Exception(err)
-            return 0
+                if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
+                    err = {'error': f'resource state, web {response.status_code}'}
+                    raise Exception(err)
+                return 0
+            except:
+                return 1
 
-    def state(self, id, res = ''):
-        protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-        hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-        port = environ.get('IAC_ENDPOINT_PORT')
-        url = f'{protocol}://{hostname}:{port}/resources/query/{id}?document=state'
+    def state(self, id, res = '', link='null'):
+        if link == 'null':
+            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
+            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
+            port = environ.get('IAC_ENDPOINT_PORT')
+            uri = f'{protocol}://{hostname}:{port}'
+        else:
+            uri = f'{link}'
+        url = f'{uri}/resources/query/{id}?document=state'
         # debugging
         # print(url)
-
         response = requests.get(url)
         if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
             err = {'error': f'resource query state, web {response.status_code}'}
@@ -153,9 +117,9 @@ class HttpFetch(object):
             print(err)
             raise KeyError(ke)
 
-    def wsdir(self, id):
-        pwd = getcwd().replace('/', '-')
-        return f'{id}{pwd}'
+    # def wsdir(self, id):
+    #     pwd = getcwd().replace('/', '-')
+    #     return f'{id}{pwd}'
  
     # TODO SEED MANY FUNC, FOR LOGICAL ID UPDATING, KEY IS THE RESOURCE ID WITHIN TERRAFORM, DES IS THE DESTINATION KEY ON THE API, RES IS THE RESOURCE ID ON THE API
     def seedMany(self, deployId, key='', apiKey='', resId=''):
