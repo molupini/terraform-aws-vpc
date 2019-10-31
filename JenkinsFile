@@ -42,9 +42,11 @@ pipeline{
                     script{
                         try { 
                             // PARAMS
-                            def BUCKET = sh(script: "python3 ./util/helper.py state ${params.deploymentId} S3", returnStdout: true)
-                            def DYNAMODB_TABLE = sh(script: "python3 ./util/helper.py state ${params.deploymentId} DYN", returnStdout: true)
-                            
+                            def s3 = sh(script: "python3 ./util/helper.py state ${params.deploymentId} S3", returnStdout: true)
+                            def dyn = sh(script: "python3 ./util/helper.py state ${params.deploymentId} DYN", returnStdout: true)
+                            println("variables =")
+                            println(s3)
+                            println(dyn)
                             // CACHE PLUG-INS
                             def file = "../../.terraform/plugins/linux_amd64/lock.json"
                             def fileFound = fileExists(file)
@@ -53,38 +55,38 @@ pipeline{
                             if(fileFound){
                                 sh "terraform init \
                                 -input=false \
-                                -backend-config='bucket=${BUCKET}' \
-                                -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
                                 -backend-config='access_key=${AWS_ACCESS_KEY}' \
                                 -backend-config='secret_key=${AWS_SECRET_KEY}' \
                                 -backend-config='region=${AWS_REGION}' \
                                 -reconfigure \
                                 -plugin-dir ../../.terraform/plugins/linux_amd64"
+                                // -backend-config='bucket=${BUCKET}' \
+                                // -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
                             } 
                             else {
                                 sh "terraform init \
                                 -input=false \
-                                -backend-config='bucket=${BUCKET}' \
-                                -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
                                 -backend-config='access_key=${AWS_ACCESS_KEY}' \
                                 -backend-config='secret_key=${AWS_SECRET_KEY}' \
                                 -backend-config='region=${AWS_REGION}' \
                                 -reconfigure"
+                                // -backend-config='bucket=${BUCKET}' \
+                                // -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
                                 sh "cp -r ./.terraform/ ../../"
                             }
 
                             sh "python3 ./util/helper.py status ${params.deploymentId} 1 state"
                         } catch (Exception err){
                             sh "rm -R ../../.terraform/ -f"
-                            sh "terraform init \
-                            -input=false \
-                            -backend-config='bucket=${BUCKET}' \
-                            -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
-                            -backend-config='access_key=${AWS_ACCESS_KEY}' \
-                            -backend-config='secret_key=${AWS_SECRET_KEY}' \
-                            -backend-config='region=${AWS_REGION}' \
-                            -reconfigure \
-                            -plugin-dir ''"
+                            // sh "terraform init \
+                            // -input=false \
+                            // -backend-config='bucket=${BUCKET}' \
+                            // -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
+                            // -backend-config='access_key=${AWS_ACCESS_KEY}' \
+                            // -backend-config='secret_key=${AWS_SECRET_KEY}' \
+                            // -backend-config='region=${AWS_REGION}' \
+                            // -reconfigure \
+                            // -plugin-dir ''"
                             // println(err)
                             // COMMENT OUT THROW FOR THE INTERIM
                             // throw new Exception("Unable to perform init, try again!")
@@ -119,7 +121,7 @@ pipeline{
                         try { 
                             sh "terraform workspace select ${params.deploymentId}_tfvpc"
                         } catch (Exception err){
-                            sh "terraform workspace new ${env.DIR}_tfvpc"
+                            sh "terraform workspace new ${env.deploymentId}_tfvpc"
                         }
                     }
                 }
