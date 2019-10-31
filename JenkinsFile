@@ -16,16 +16,13 @@ pipeline{
                 dir('./'){
                     script{
                         try {
-                            def file ="./tfvpc"
+                            def file ="./tfvpc/vpc.tf"
                             def fileFound = fileExists(file)
                             if(fileFound){
                                 sh "rm -R ./tfvpc/ -f"
                             }
-                            // sh "mkdir ./${params.deploymentId}"
-                            // sh "cd ./${params.deploymentId}"
                             sh "git init"
                             sh "git config remote.origin.url git@gitlab.com:bcx-sanlam-group/tfvpc.git"
-                            sh "git --version"
                             sh "git clone git@gitlab.com:bcx-sanlam-group/tfvpc.git" 
                         } catch (Exception err){
                             println(err)
