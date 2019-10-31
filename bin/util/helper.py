@@ -55,7 +55,6 @@ class HttpFetch(object):
         url = f'{uri}/resources/query/{id}?document=tagging'
         # debugging
         # print(url)
-
         response = requests.get(url)
         if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
             err = {'error': f'resource tagging, web {response.status_code}'}
@@ -92,7 +91,8 @@ class HttpFetch(object):
             except:
                 return 1
 
-    def state(self, id, res = '', link='null'):
+    def state(self, id, res='null', link='null'):
+        
         if link == 'null':
             protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
             hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
@@ -100,22 +100,23 @@ class HttpFetch(object):
             uri = f'{protocol}://{hostname}:{port}'
         else:
             uri = f'{link}'
+        
         url = f'{uri}/resources/query/{id}?document=state'
-        # debugging
-        # print(url)
         response = requests.get(url)
         if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
             err = {'error': f'resource query state, web {response.status_code}'}
-            # print(err)
             raise Exception(err)
         states = response.json()
         try:
-            if states[res]:
-                return states[res]
+            if res == 'null':
+                return json.dumps(states, separators=(',',':'), indent=2)
+            else:
+                if states[res]:
+                    return states[res]
         except KeyError as ke:
             err = {'error': f'{id}, state keyError'}
-            print(err)
             raise KeyError(ke)
+        return 1
 
     # def wsdir(self, id):
     #     pwd = getcwd().replace('/', '-')
