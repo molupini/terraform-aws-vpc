@@ -7,7 +7,8 @@ pipeline{
     environment{
         AWS_ACCESS_KEY = credentials("AWS_ACCESS_KEY")
         AWS_SECRET_KEY = credentials("AWS_SECRET_KEY")
-        AWS_REGION = credentials("AWS_REGION")
+        // AWS_REGION = credentials("AWS_REGION")
+        AWS_REGION = "eu-west-1"
         TF_IN_AUTOMATION = "true"
     }
     stages{
@@ -41,12 +42,8 @@ pipeline{
                     script{
                         try { 
                             // PARAMS
-                            sh "unset BUCKET"
-                            sh "unset DYNAMODB_TABLE"
-                            sh "export BUCKET=`python3 ./util/helper.py state ${deploymentId} S3`"
-                            sh "export DYNAMODB_TABLE=`python3 ./util/helper.py state ${deploymentId} DYN`"
-                            def BUCKET = "${env.BUCKET}"
-                            def DYNAMODB_TABLE = "${env.DYNAMODB_TABLE}"
+                            def BUCKET = sh(script: "python3 ./util/helper.py state ${params.deploymentId} S3", returnStdout: true)
+                            def DYNAMODB_TABLE = sh(script: "python3 ./util/helper.py state ${params.deploymentId} DYN", returnStdout: true)
                             
                             // CACHE PLUG-INS
                             def file = "../../.terraform/plugins/linux_amd64/lock.json"
@@ -56,21 +53,23 @@ pipeline{
                             if(fileFound){
                                 sh "terraform init \
                                 -input=false \
-                                -backend-config='bucket=${env.BUCKET}' \
-                                -backend-config='dynamodb_table=${env.DYNAMODB_TABLE}' \
+                                -backend-config='bucket=${BUCKET}' \
+                                -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
                                 -backend-config='access_key=${AWS_ACCESS_KEY}' \
                                 -backend-config='secret_key=${AWS_SECRET_KEY}' \
                                 -backend-config='region=${AWS_REGION}' \
+                                -reconfigure \
                                 -plugin-dir ../../.terraform/plugins/linux_amd64"
                             } 
                             else {
                                 sh "terraform init \
                                 -input=false \
-                                -backend-config='bucket=${env.BUCKET}' \
-                                -backend-config='dynamodb_table=${env.DYNAMODB_TABLE}' \
+                                -backend-config='bucket=${BUCKET}' \
+                                -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
                                 -backend-config='access_key=${AWS_ACCESS_KEY}' \
                                 -backend-config='secret_key=${AWS_SECRET_KEY}' \
-                                -backend-config='region=${AWS_REGION}'"
+                                -backend-config='region=${AWS_REGION}' \
+                                -reconfigure"
                                 sh "cp -r ./.terraform/ ../../"
                             }
 
@@ -79,11 +78,12 @@ pipeline{
                             sh "rm -R ../../.terraform/ -f"
                             sh "terraform init \
                             -input=false \
-                            -backend-config='bucket=${env.BUCKET}' \
-                            -backend-config='dynamodb_table=${env.DYNAMODB_TABLE}' \
+                            -backend-config='bucket=${BUCKET}' \
+                            -backend-config='dynamodb_table=${DYNAMODB_TABLE}' \
                             -backend-config='access_key=${AWS_ACCESS_KEY}' \
                             -backend-config='secret_key=${AWS_SECRET_KEY}' \
                             -backend-config='region=${AWS_REGION}' \
+                            -reconfigure \
                             -plugin-dir ''"
                             // println(err)
                             // COMMENT OUT THROW FOR THE INTERIM
