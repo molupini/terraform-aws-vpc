@@ -7,17 +7,17 @@ data "aws_vpc" "vpc" {
 
 data "aws_subnet_ids" "subnet" {
   vpc_id = "${data.aws_vpc.vpc.id}"
-  filter {
-    name = "tag:Name"
-    values = [
-      # var.perimeter != "private" || var.perimeter != "public"
-      # "${var.perimeter == "default" ? "*" : "*-${lower(data.external.perimeter.result[var.perimeter])}-*"}",
-      # "${var.perimeter == "default" ? "*" : "*-${upper(data.external.perimeter.result[var.perimeter])}-*"}"
-      # "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${lower(data.external.perimeter.result[var.perimeter])}-*"}",
-      # "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${upper(data.external.perimeter.result[var.perimeter])}-*"}"
-      "*"
-    ]
-  }
+  # filter {
+  #   name = "tag:Name"
+  #   values = [
+  #     # var.perimeter != "private" || var.perimeter != "public"
+  #     # "${var.perimeter == "default" ? "*" : "*-${lower(data.external.perimeter.result[var.perimeter])}-*"}",
+  #     # "${var.perimeter == "default" ? "*" : "*-${upper(data.external.perimeter.result[var.perimeter])}-*"}"
+  #     # "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${lower(data.external.perimeter.result[var.perimeter])}-*"}",
+  #     # "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${upper(data.external.perimeter.result[var.perimeter])}-*"}"
+  #     "*"
+  #   ]
+  # }
 }
 
 data "aws_subnet" "subnet" {
