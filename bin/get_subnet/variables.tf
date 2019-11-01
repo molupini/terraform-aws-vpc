@@ -14,10 +14,3 @@ variable "perimeter" {
 }
 variable "id" {
 }
-
-#########################################################
-# external
-#########################################################
-data "external" "perimeter" {
-  program = ["python3", "../util/helper.py", "perimeter", "${var.id}"]
-}

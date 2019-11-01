@@ -212,6 +212,9 @@ pipeline{
                             }
                             try {
                                 sh "terraform apply \
+                                -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+                                -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+                                -var 'aws_region=${AWS_REGION}' \
                                 --target=module.get_subnet"
                                 sh "terraform output -json > ${deploymentId}-output.json"
                                 // \
@@ -219,12 +222,14 @@ pipeline{
                                 // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
                                 // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
                                 // -var 'aws_region=${AWS_REGION}'"
-                                sh "python3 ./util/helper.py status ${params.deploymentId} 8"
+                                // sh "python3 ./util/helper.py status ${params.deploymentId} 8"
+                                println("terraform apply, get_subnet =")
+                                sh "pwd"
                             } catch (Exception err) {
                                 refresh = true
                             }
                         } 
-                        sh "python3 ./util/helper.py status ${params.deploymentId} 6"
+                        // sh "python3 ./util/helper.py status ${params.deploymentId} 6"
                     }
                 }
             }

@@ -47,3 +47,6 @@ data "external" "vpc" {
 data "external" "tagging" {
   program = ["python3", "./util/helper.py", "tagging", "${var.id}"]
 }
+data "external" "perimeter" {
+  program = ["python3", "./util/helper.py", "perimeter", "${var.id}"]
+}

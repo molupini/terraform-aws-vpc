@@ -73,6 +73,6 @@ module "get_subnet" {
   aws_secret_key = var.aws_secret_key
   aws_region     = var.aws_region
   vpcId          = module.vpc.vpc_id
-  perimeter      = "default"
+  perimeter      = data.external.perimeter.result
   id             = var.id
 }
