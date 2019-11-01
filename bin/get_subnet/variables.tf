@@ -1,12 +1,12 @@
 ##########################################################
 # variables
 ##########################################################
-# variable "aws_access_key" {
-# }
-# variable "aws_secret_key" {
-# }
-# variable "aws_region" {
-# }
+variable "aws_access_key" {
+}
+variable "aws_secret_key" {
+}
+variable "aws_region" {
+}
 variable "vpcId" {
 }
 variable "perimeter" {
@@ -19,5 +19,5 @@ variable "id" {
 # external
 #########################################################
 data "external" "perimeter" {
-  program = ["python3", "./util/helper.py", "perimeter", "${var.id}"]
+  program = ["python3", "../util/helper.py", "perimeter", "${var.id}"]
 }

@@ -44,8 +44,8 @@ pipeline{
                             // PARAMS
                             def s3 = sh(script: "python3 ./util/helper.py state ${params.deploymentId} S3", returnStdout: true)
                             def dyn = sh(script: "python3 ./util/helper.py state ${params.deploymentId} DYN", returnStdout: true)
-                            s3 = 'bucket='+='${s3}'
-                            dyn = 'dynamodb_table='+='${dyn}'
+                            s3 = 'bucket=' + s3.replaceAll("\\s","")
+                            dyn = 'dynamodb_table=' + dyn.replaceAll("\\s","")
                             println("variables =")
                             println(s3)
                             println(dyn)
@@ -81,7 +81,7 @@ pipeline{
                                 sh "cp -r ./.terraform/ ../../"
                             }
 
-                            sh "python3 ./util/helper.py status ${params.deploymentId} 1 state"
+                            sh "python3 ./util/helper.py status ${params.deploymentId} 1"
                         } catch (Exception err){
                             sh "rm -R ../../.terraform/ -f"
                             // sh "terraform init \
@@ -96,7 +96,7 @@ pipeline{
                             // println(err)
                             // COMMENT OUT THROW FOR THE INTERIM
                             // throw new Exception("Unable to perform init, try again!")
-                            sh "python3 ./util/helper.py status ${params.deploymentId} 2 state"
+                            sh "python3 ./util/helper.py status ${params.deploymentId} 2"
                         }
                     }
                 }
@@ -143,12 +143,14 @@ pipeline{
                             -var 'id=${params.deploymentId}' \
                             -var 'aws_access_key=${AWS_ACCESS_KEY}' \
                             -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                            -var 'aws_region=${AWS_REGION}'"
-                            sh "python3 ./util/helper.py status ${params.deploymentId} 3 state"
+                            -var 'aws_region=${AWS_REGION}' \
+                            -out vpc.tfplan \
+                            --target=module.vpc"
+                            sh "python3 ./util/helper.py status ${params.deploymentId} 3"
                         } catch (Exception err){
                             println(err)
                             throw new Exception("Unable perform plan, try again!")
-                            sh "python3 ./util/helper.py status ${params.deploymentId} 4 state"
+                            sh "python3 ./util/helper.py status ${params.deploymentId} 4"
                         }
                     }
                 }
@@ -172,18 +174,20 @@ pipeline{
                             -var 'id=${params.deploymentId}' \
                             -var 'aws_access_key=${AWS_ACCESS_KEY}' \
                             -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                            -var 'aws_region=${AWS_REGION}'"
+                            -var 'aws_region=${AWS_REGION}' \
+                            -out terraform.tfplan"
                             // APPLY DESTROY
                             try {
                                 input message: "Confirm Destroy", ok: "Destroy Config"
                                 destroy = true
                                 if(destroy){
-                                    sh "terraform apply \
-                                    -var 'id=${params.deploymentId}' \
-                                    -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                                    -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                                    -var 'aws_region=${AWS_REGION}'"
-                                    sh "python3 ./util/helper.py status ${params.deploymentId} 8 state"
+                                    sh "terraform apply"
+                                    //  \
+                                    // -var 'id=${params.deploymentId}' \
+                                    // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+                                    // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+                                    // -var 'aws_region=${AWS_REGION}'"
+                                    sh "python3 ./util/helper.py status ${params.deploymentId} 8"
                                     currentBuild.result = "UNSTABLE"
                                 }
                             } catch(Exception err){
@@ -197,16 +201,30 @@ pipeline{
                     if(apply){
                         dir("./tfvpc/bin"){
                             try {
+                                sh "terraform apply vpc.tfplan"
+                                // \
+                                // -var 'id=${params.deploymentId}' \
+                                // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+                                // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+                                // -var 'aws_region=${AWS_REGION}'"
+                            } catch (Exception err) {
+                                refresh = true
+                            }
+                            try {
                                 sh "terraform apply \
-                                -var 'id=${params.deploymentId}' \
-                                -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                                -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                                -var 'aws_region=${AWS_REGION}'"
+                                --target=module.get_subnet"
+                                sh "terraform output -json > ${deploymentId}-output.json"
+                                // \
+                                // -var 'id=${params.deploymentId}' \
+                                // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
+                                // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
+                                // -var 'aws_region=${AWS_REGION}'"
+                                sh "python3 ./util/helper.py status ${params.deploymentId} 8"
                             } catch (Exception err) {
                                 refresh = true
                             }
                         } 
-                        sh "python3 ./util/helper.py status ${params.deploymentId} 6 state"
+                        sh "python3 ./util/helper.py status ${params.deploymentId} 6"
                     }
                 }
             }
