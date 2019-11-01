@@ -13,8 +13,9 @@ data "aws_subnet_ids" "subnet" {
       # var.perimeter != "private" || var.perimeter != "public"
       # "${var.perimeter == "default" ? "*" : "*-${lower(data.external.perimeter.result[var.perimeter])}-*"}",
       # "${var.perimeter == "default" ? "*" : "*-${upper(data.external.perimeter.result[var.perimeter])}-*"}"
-      "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${lower(data.external.perimeter.result[var.perimeter])}-*"}",
-      "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${upper(data.external.perimeter.result[var.perimeter])}-*"}"
+      # "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${lower(data.external.perimeter.result[var.perimeter])}-*"}",
+      # "${var.perimeter == "default" ? data.external.perimeter.result[var.perimeter] : "*-${upper(data.external.perimeter.result[var.perimeter])}-*"}"
+      "*"
     ]
   }
 }
