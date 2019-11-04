@@ -16,12 +16,20 @@ output "deploymentId" {
   value = "${data.external.tagging.result["deploymentId"]}"
 }
 
-output "logicalId" {
-  value = "${module.vpc.vpc_id}"
-}
+# SEE BELOW OUTPUT
+# output "logicalId" {
+#   value = "${module.vpc.vpc_id}"
+# }
+# output "vpc_resourceId" {
+#   value = "${data.external.vpc.result["resourceId"]}"
+# }
 
-output "vpc_resourceId" {
-  value = "${data.external.vpc.result["resourceId"]}"
+# USED WHEN SEEDING API 
+output "aws_vpc_id" {
+  value = map("${data.external.vpc.result["resourceId"]}", "${module.vpc.vpc_id}")
+  depends_on = [
+    module.get_subnet
+  ]
 }
 
 output "done" {
@@ -34,11 +42,7 @@ output "done" {
 # RESOURCE SPECFIC 
 
 # VPC
-
-# TESTING VPC OUTPUT
 # output "module_vpc" {
 #   value = "${module.vpc}"
-#   depends_on = [
-#     module.vpc
-#   ]
 # }
+

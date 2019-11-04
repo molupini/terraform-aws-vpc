@@ -189,7 +189,7 @@ pipeline{
                                 sh "python3 ./util/helper.py status ${params.deploymentId} 6"
                                 
                                 // SEED
-                                sh "terraform output ${params.deploymentId}-output.json"
+                                sh "terraform output -json > ${params.deploymentId}-output.json"
                                 // sh "python3 ./util/helper.py seedMany ${deploymentId} logicalId logicalId vpc_resourceId"
                             } catch (Exception err) {
                                 refresh = true

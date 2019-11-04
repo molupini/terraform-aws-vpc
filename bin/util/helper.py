@@ -160,7 +160,7 @@ class HttpFetch(object):
         else:
             uri = f'{link}'
         # API URL
-        url = f'{link}/resources/update/'
+        url = f'{uri}/resources/update/'
         k = 0
         ak = 0
         ids = 0
@@ -192,12 +192,23 @@ class HttpFetch(object):
             print(err)
             return 1
         # THE ITERATOR 
+        # debugging
+        # print("data =")
+        # print(data)
+        # print("ids =")
+        # print(ids)
+        # print("url =")
+        # print(url)
         array = ids.split(';')
+        # debugging
+        # print("array =")
+        # print(array)
         if array:
             for a in array:
                 i = a
                 d = data[ak][a]
                 # debugging
+                # print("array loop =")
                 # print(i)
                 # print(d)
                 response = requests.patch(f'{url}{i}', json={ak: d})
