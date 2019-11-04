@@ -16,21 +16,15 @@ output "deploymentId" {
   value = "${data.external.tagging.result["deploymentId"]}"
 }
 
-# SEE BELOW OUTPUT
-# output "logicalId" {
-#   value = "${module.vpc.vpc_id}"
-# }
+# USED WITHIN PIPELINE TO STORE VPC ID INTO VARIABLE FOR LATER USE
+output "logicalId" {
+  value = "${module.vpc.vpc_id}"
+}
+
+# SEE BELOW OVERLAPPED OUTPUT
 # output "vpc_resourceId" {
 #   value = "${data.external.vpc.result["resourceId"]}"
 # }
-
-# USED WHEN SEEDING API 
-output "aws_vpc_id" {
-  value = map("${data.external.vpc.result["resourceId"]}", "${module.vpc.vpc_id}")
-  depends_on = [
-    module.get_subnet
-  ]
-}
 
 output "done" {
   value = 0
@@ -45,4 +39,12 @@ output "done" {
 # output "module_vpc" {
 #   value = "${module.vpc}"
 # }
+
+# USED WHEN SEEDING API 
+output "aws_vpc_id" {
+  value = map("${data.external.vpc.result["resourceId"]}", "${module.vpc.vpc_id}")
+  depends_on = [
+    module.get_subnet
+  ]
+}
 

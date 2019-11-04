@@ -190,7 +190,7 @@ pipeline{
                                 
                                 // SEED
                                 sh "terraform output -json > ${params.deploymentId}-output.json"
-                                // sh "python3 ./util/helper.py seedMany ${deploymentId} logicalId logicalId vpc_resourceId"
+                                sh "python3 ./util/helper.py seedMany ${deploymentId} aws_vpc_id logicalId vpc_resourceId"
                             } catch (Exception err) {
                                 refresh = true
                             }
