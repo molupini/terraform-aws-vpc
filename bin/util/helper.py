@@ -19,13 +19,11 @@ class HttpFetch(object):
         url = f'{uri}/resources/query/{id}?document={document}'
         # debugging
         # print(url)
-
         response = requests.get(url)
         if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
             err = {'error': f'resource resources, web {response.status_code}'}
             # print(err)
             raise Exception(err)
-
         deploy = response.json()
         if deploy:
             if res != 'null':
@@ -129,7 +127,6 @@ class HttpFetch(object):
         url = f'{uri}/resources/query/{id}?document=perimeter'
         # debugging
         # print(url)
-
         response = requests.get(url)
         if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
             err = {'error': f'perimeter query, web {response.status_code}'}
@@ -146,10 +143,6 @@ class HttpFetch(object):
         else:
             raise 1
 
-    # def wsdir(self, id):
-    #     pwd = getcwd().replace('/', '-')
-    #     return f'{id}{pwd}'
- 
     # TODO SEED MANY FUNC, FOR LOGICAL ID UPDATING, KEY IS THE RESOURCE ID WITHIN TERRAFORM, DES IS THE DESTINATION KEY ON THE API, RES IS THE RESOURCE ID ON THE API
     def seedMany(self, deployId, key='', apiKey='', resId='', link='null'):
         if link == 'null':
