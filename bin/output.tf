@@ -122,9 +122,6 @@ output "done" {
 
 output "vpc_resourceId" {
   value = "${data.external.vpc.result["resourceId"]}"
-  depends_on = [
-    # aws_instance.ec2
-  ]
 }
 
 # output "aws_vpc_id" {
@@ -134,23 +131,55 @@ output "vpc_resourceId" {
 #   ]
 # }
 
-output "aws_vpc_id" {
-  value = map(module.get_subnet.aws_vpc_vpc.tags.resourceId, module.get_subnet.aws_vpc_vpc.id)
-  depends_on = [
-    module.get_subnet
-  ]
-}
+# SUBNET TF
+# output "aws_vpc_vpc" {
+#   value = "${data.aws_vpc.vpc}"
+#   depends_on = [
+#     module.vpc
+#   ]
+# }
+# output "aws_subnet_subnet_id" {
+#   value = "${data.aws_subnet.subnet.*.id}"
+#   depends_on = [
+#     module.vpc
+#   ]
+# }
+# output "aws_subnet_subnet_cidr_block" {
+#   value = "${data.aws_subnet.subnet.*.cidr_block}"
+#   depends_on = [
+#     module.vpc
+#   ]
+# }
+# output "aws_subnet_tags" {
+#   value = "${data.aws_subnet.subnet.*.tags}"
+#   depends_on = [
+#     module.vpc
+#   ]
+# }
 
-output "aws_subnet_id" {
-  value = "${zipmap(module.get_subnet.aws_subnet_tags.*.Name, module.get_subnet.aws_subnet_subnet_id)}"
-  depends_on = [
-    module.get_subnet
-  ]
-}
+# COMMENT OUT WHEN DONE TESTING
+# output "aws_subnet_all" {
+#   value = "${data.aws_subnet.subnet.*}"
+# }
 
-output "aws_subnet_cidr" {
-  value = "${zipmap(module.get_subnet.aws_subnet_tags.*.Name, module.get_subnet.aws_subnet_subnet_cidr_block)}"
-  depends_on = [
-    module.get_subnet
-  ]
-}
+# COMBO VPC MODULE AND SUBNET TF
+# output "aws_vpc_id" {
+#   value = map(module.get_subnet.aws_vpc_vpc.tags.resourceId, module.get_subnet.aws_vpc_vpc.id)
+#   depends_on = [
+#     module.get_subnet
+#   ]
+# }
+
+# output "aws_subnet_id" {
+#   value = "${zipmap(module.get_subnet.aws_subnet_tags.*.Name, module.get_subnet.aws_subnet_subnet_id)}"
+#   depends_on = [
+#     module.get_subnet
+#   ]
+# }
+
+# output "aws_subnet_cidr" {
+#   value = "${zipmap(module.get_subnet.aws_subnet_tags.*.Name, module.get_subnet.aws_subnet_subnet_cidr_block)}"
+#   depends_on = [
+#     module.get_subnet
+#   ]
+# }

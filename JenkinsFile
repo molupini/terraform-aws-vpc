@@ -144,8 +144,7 @@ pipeline{
                             -var 'aws_access_key=${AWS_ACCESS_KEY}' \
                             -var 'aws_secret_key=${AWS_SECRET_KEY}' \
                             -var 'aws_region=${AWS_REGION}' \
-                            -out vpc.tfplan \
-                            --target=module.vpc"
+                            -out apply.tfplan"
                             sh "python3 ./util/helper.py status ${params.deploymentId} 3"
                         } catch (Exception err){
                             println(err)
@@ -175,13 +174,13 @@ pipeline{
                             -var 'aws_access_key=${AWS_ACCESS_KEY}' \
                             -var 'aws_secret_key=${AWS_SECRET_KEY}' \
                             -var 'aws_region=${AWS_REGION}' \
-                            -out terraform.tfplan"
+                            -out destroy.tfplan"
                             // APPLY DESTROY
                             try {
                                 input message: "Confirm Destroy", ok: "Destroy Config"
                                 destroy = true
                                 if(destroy){
-                                    sh "terraform apply"
+                                    sh "terraform apply destroy.tfplan"
                                     //  \
                                     // -var 'id=${params.deploymentId}' \
                                     // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
@@ -201,30 +200,12 @@ pipeline{
                     if(apply){
                         dir("./tfvpc/bin"){
                             try {
-                                sh "terraform apply vpc.tfplan"
+                                sh "terraform apply apply.tfplan"
                                 // \
                                 // -var 'id=${params.deploymentId}' \
                                 // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
                                 // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
                                 // -var 'aws_region=${AWS_REGION}'"
-                            } catch (Exception err) {
-                                refresh = true
-                            }
-                            try {
-                                sh "terraform apply \
-                                -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                                -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                                -var 'aws_region=${AWS_REGION}' \
-                                --target=module.get_subnet"
-                                sh "terraform output -json > ${deploymentId}-output.json"
-                                // \
-                                // -var 'id=${params.deploymentId}' \
-                                // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                                // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                                // -var 'aws_region=${AWS_REGION}'"
-                                // sh "python3 ./util/helper.py status ${params.deploymentId} 8"
-                                println("terraform apply, get_subnet =")
-                                sh "pwd"
                             } catch (Exception err) {
                                 refresh = true
                             }
