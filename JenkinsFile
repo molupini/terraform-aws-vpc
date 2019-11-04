@@ -7,8 +7,8 @@ pipeline{
     environment{
         AWS_ACCESS_KEY = credentials("AWS_ACCESS_KEY")
         AWS_SECRET_KEY = credentials("AWS_SECRET_KEY")
-        // AWS_REGION = credentials("AWS_REGION")
-        AWS_REGION = "eu-west-1"
+        AWS_REGION = credentials("AWS_REGION")
+        // AWS_REGION = "eu-west-1"
         TF_IN_AUTOMATION = "true"
     }
     stages{
@@ -46,9 +46,10 @@ pipeline{
                             def dyn = sh(script: "python3 ./util/helper.py state ${params.deploymentId} DYN", returnStdout: true)
                             s3 = 'bucket=' + s3.replaceAll("\\s","")
                             dyn = 'dynamodb_table=' + dyn.replaceAll("\\s","")
-                            println("variables =")
-                            println(s3)
-                            println(dyn)
+                            // debugging
+                            // println("variables =")
+                            // println(s3)
+                            // println(dyn)
                             // CACHE PLUG-INS
                             def file = "../../.terraform/plugins/linux_amd64/lock.json"
                             def fileFound = fileExists(file)
@@ -64,8 +65,6 @@ pipeline{
                                 -backend-config='${dyn}' \
                                 -reconfigure \
                                 -plugin-dir ../../.terraform/plugins/linux_amd64"
-                                // -backend-config=\"bucket=${BUCKET}\" \
-                                // -backend-config=\"dynamodb_table=${DYNAMODB_TABLE}\" \
                             } 
                             else {
                                 sh "terraform init \
@@ -76,26 +75,11 @@ pipeline{
                                 -backend-config='${s3}' \
                                 -backend-config='${dyn}' \
                                 -reconfigure"
-                                // -backend-config=\"bucket=${BUCKET}\" \
-                                // -backend-config=\"dynamodb_table=${DYNAMODB_TABLE}\" \
                                 sh "cp -r ./.terraform/ ../../"
                             }
-
                             sh "python3 ./util/helper.py status ${params.deploymentId} 1"
                         } catch (Exception err){
                             sh "rm -R ../../.terraform/ -f"
-                            // sh "terraform init \
-                            // -input=false \
-                            // -backend-config=\"bucket=${BUCKET}\" \
-                            // -backend-config=\"dynamodb_table=${DYNAMODB_TABLE}\" \
-                            // -backend-config=\"access_key=${AWS_ACCESS_KEY}\" \
-                            // -backend-config=\"secret_key=${AWS_SECRET_KEY}\" \
-                            // -backend-config=\"region=${AWS_REGION}\" \
-                            // -reconfigure \
-                            // -plugin-dir \"\""
-                            // println(err)
-                            // COMMENT OUT THROW FOR THE INTERIM
-                            // throw new Exception("Unable to perform init, try again!")
                             sh "python3 ./util/helper.py status ${params.deploymentId} 2"
                         }
                     }
@@ -181,11 +165,6 @@ pipeline{
                                 destroy = true
                                 if(destroy){
                                     sh "terraform apply destroy.tfplan"
-                                    //  \
-                                    // -var 'id=${params.deploymentId}' \
-                                    // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                                    // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                                    // -var 'aws_region=${AWS_REGION}'"
                                     sh "python3 ./util/helper.py status ${params.deploymentId} 8"
                                     currentBuild.result = "UNSTABLE"
                                 }
@@ -201,16 +180,13 @@ pipeline{
                         dir("./tfvpc/bin"){
                             try {
                                 sh "terraform apply apply.tfplan"
-                                // \
-                                // -var 'id=${params.deploymentId}' \
-                                // -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                                // -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                                // -var 'aws_region=${AWS_REGION}'"
+                                def vpc = sh(script: "terraform output logicalId", returnStdout: true)
+                                println(vpc)
                             } catch (Exception err) {
                                 refresh = true
                             }
                         } 
-                        // sh "python3 ./util/helper.py status ${params.deploymentId} 6"
+                        sh "python3 ./util/helper.py status ${params.deploymentId} 6"
                     }
                 }
             }
