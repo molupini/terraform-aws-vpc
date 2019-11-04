@@ -21,10 +21,9 @@ output "logicalId" {
   value = "${module.vpc.vpc_id}"
 }
 
-# SEE BELOW OVERLAPPED OUTPUT
-# output "vpc_resourceId" {
-#   value = "${data.external.vpc.result["resourceId"]}"
-# }
+output "vpc_resourceId" {
+  value = "${data.external.vpc.result["resourceId"]}"
+}
 
 output "done" {
   value = 0
