@@ -165,8 +165,6 @@ class HttpFetch(object):
         ak = 0
         ids = 0
         data = None
-        # debugging
-        # print(url)
         try:
             # DEPLOYMENT ID FOR SPECIFIC FILE 
             file = open(f'./{deployId}-output.json', 'r').read()
@@ -191,7 +189,6 @@ class HttpFetch(object):
             err = {'error': f'{id}, FileNotFoundError {fe}'}
             print(err)
             return 1
-        # THE ITERATOR 
         # debugging
         # print("data =")
         # print(data)
