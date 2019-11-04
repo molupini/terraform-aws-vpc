@@ -179,14 +179,22 @@ pipeline{
                     if(apply){
                         dir("./tfvpc/bin"){
                             try {
+                                // APPLY
                                 sh "terraform apply apply.tfplan"
+
+                                // STORE VPC ID FOR GET_SUBNETS MODULE 
                                 def vpc = sh(script: "terraform output logicalId", returnStdout: true)
-                                println(vpc)
+                                // println("vpc, logicalId =")
+                                // println(vpc)
+                                sh "python3 ./util/helper.py status ${params.deploymentId} 6"
+                                
+                                // SEED
+                                sh "terraform output ${params.deploymentId}-output.json"
+                                // sh "python3 ./util/helper.py seedMany ${deploymentId} logicalId logicalId vpc_resourceId"
                             } catch (Exception err) {
                                 refresh = true
                             }
                         } 
-                        sh "python3 ./util/helper.py status ${params.deploymentId} 6"
                     }
                 }
             }

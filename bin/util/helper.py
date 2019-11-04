@@ -151,12 +151,16 @@ class HttpFetch(object):
     #     return f'{id}{pwd}'
  
     # TODO SEED MANY FUNC, FOR LOGICAL ID UPDATING, KEY IS THE RESOURCE ID WITHIN TERRAFORM, DES IS THE DESTINATION KEY ON THE API, RES IS THE RESOURCE ID ON THE API
-    def seedMany(self, deployId, key='', apiKey='', resId=''):
-        protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-        hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-        port = environ.get('IAC_ENDPOINT_PORT')
+    def seedMany(self, deployId, key='', apiKey='', resId='', link='null'):
+        if link == 'null':
+            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
+            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
+            port = environ.get('IAC_ENDPOINT_PORT')
+            uri = f'{protocol}://{hostname}:{port}'
+        else:
+            uri = f'{link}'
         # API URL
-        url = f'{protocol}://{hostname}:{port}/resources/update/'
+        url = f'{link}/resources/update/'
         k = 0
         ak = 0
         ids = 0
