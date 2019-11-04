@@ -3,6 +3,7 @@
 #########################################################
 data "aws_vpc" "vpc" {
   id = "${module.vpc.vpc_id}"
+  depends_on = module.vpc
 }
 
 data "aws_subnet_ids" "subnet" {
