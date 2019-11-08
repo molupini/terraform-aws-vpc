@@ -36,11 +36,13 @@ class HttpFetch(object):
                             return 0
                     return json.dumps(deploy['resources'][res])
                 except:
+                    # RETURN EMPTY ARRAY TO PREVENT RESOURCE USAGE WITH COUNT PARAM
                     err = {'error': f'resource, resources not found {res}'}
-                    raise Exception(err)
+                    empty = json.dumps([])
+                    return empty
             return json.dumps(deploy['resources'], separators=(',',':'), indent=2)
         else:
-            raise 1
+            return 1
 
     def tagging(self, id, link='null'):
         if link == 'null':
