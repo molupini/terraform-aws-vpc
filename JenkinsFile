@@ -185,7 +185,7 @@ pipeline{
                                 sh "terraform apply apply.tfplan"
 
                                 // STORE VPC ID FOR GET_SUBNETS MODULE 
-                                def vpc = sh(script: "terraform output logicalId", returnStdout: true)
+                                def vpc = sh(script: "terraform output logicalId", returnjson.dumps(deploy['resources'][res], separators=(',',':'), indent=2)Stdout: true)
                                 // println("vpc, logicalId =")
                                 // println(vpc)
                                 sh "python3 ./util/helper.py status ${params.deploymentId} 6"
@@ -198,7 +198,7 @@ pipeline{
                             }
                         } 
                     }
-                }
+                }json.dumps(deploy['resources'][res], separators=(',',':'), indent=2)
             }
         }
         // TODO VERIFY IF NECESSARY
