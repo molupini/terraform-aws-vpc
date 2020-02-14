@@ -8,17 +8,16 @@
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
-  name = "${data.external.vpc.result["logicalName"]}"
+  name = var.vpc[0]["Name"]
 
   # TODO MAKE BELOW API PARAM
-  cidr = "${var.networkAddress}"
+  cidr = var.networkAddress
 
   # EXAMPLE
   # azs             = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
   azs = [
     for az in var.azs :
-    # concat(data.external.vpc.result["region"], a)
-    "${data.external.vpc.result["region"]}${az}"
+    "${var.aws_region}${az}"
 
   ]
 
@@ -57,23 +56,11 @@ module "vpc" {
   # enable_vpn_gateway = true
 
   # TAGGING 
-  tags = "${
-    merge("${data.external.tagging.result}",
-      map(
-        "resourceId", "${data.external.vpc.result["resourceId"]}"
-      )
-  )}"
-
+  tags = var.vpc[0]
 }
 
+# IF NECESSARY, UNTESTED 
 # module "get_subnet" {
 #   source = "./get_subnet"
-
-#   aws_access_key = var.aws_access_key
-#   aws_secret_key = var.aws_secret_key
-#   aws_region     = var.aws_region
 #   vpcId          = module.vpc.vpc_id
-#   # OMIT AS WILL RETURN ALL
-#   # perimeter      = data.external.perimeter.result
-#   id             = var.id
 # }

@@ -6,9 +6,8 @@ services:
         context: .
         target: dev
         dockerfile: ./terraform.Dockerfile
-      # TODO ISSUE ATTACHING VOL RATHER COPY
-      # volumes:
-      #   - ./bin/.:/app
+      volumes:
+        - ./bin/.:/app
       env_file:
         - ./.env/app.env
       stdin_open: true

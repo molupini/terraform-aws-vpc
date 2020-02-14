@@ -5,84 +5,43 @@ import fire
 import json
 import re
 
+protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
+hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
+port = environ.get('IAC_ENDPOINT_PORT')
+uri = f'{protocol}://{hostname}:{port}'
+
 
 class HttpFetch(object):
-    
-    def resources(self, id, res='null', document='resources', element='null', link='null'):
-        if link == 'null':
-            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-            port = environ.get('IAC_ENDPOINT_PORT')
-            uri = f'{protocol}://{hostname}:{port}'
-        else:
-            uri = f'{link}'
-        url = f'{uri}/resources/query/{id}?document={document}'
-        # debugging
-        # print(url)
+
+    # APP
+    # FETCH TAG, DEPLOYMENT, CONFIG, CONNECTOR ETC 
+    def app(self, id, document='tag', res='null'):
+        # WEB REQUEST
+        url = f'{uri}/app{id}?document={document}'
         response = requests.get(url)
         if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
-            err = {'error': f'resource resources, web {response.status_code}'}
-            # print(err)
+            err = {'error': f'web {response.status_code}'}
             raise Exception(err)
+        # TO JSON
         deploy = response.json()
         if deploy:
             if res != 'null':
                 try:
-                    if element != 'null':
-                        # print(element)
-                        try:
-                            return deploy['resources'][res][element]
-                        except:
-                            return 0
-                    return json.dumps(deploy['resources'][res])
+                    return json.dumps(deploy[res], separators=(',',':'), indent=2)
                 except:
                     # RETURN EMPTY ARRAY TO PREVENT RESOURCE USAGE WITH COUNT PARAM
-                    err = {'error': f'resource, resources not found {res}'}
+                    err = {'error': f'not found {res}'}
                     empty = json.dumps([])
                     return empty
-            return json.dumps(deploy['resources'], separators=(',',':'), indent=2)
+            return json.dumps(deploy, separators=(',',':'), indent=2)
         else:
             return 1
 
-    def tagging(self, id, link='null'):
-        if link == 'null':
-            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-            port = environ.get('IAC_ENDPOINT_PORT')
-            uri = f'{protocol}://{hostname}:{port}'
-        else:
-            uri = f'{link}'
-        url = f'{uri}/resources/query/{id}?document=tagging'
-        # debugging
-        # print(url)
-        response = requests.get(url)
-        if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
-            err = {'error': f'resource tagging, web {response.status_code}'}
-            # print(err)
-            raise Exception(err)
-
-        deploy = response.json()
-        if deploy:
-            return json.dumps(deploy['tagging'], separators=(',',':'), indent=2)
-        else:
-            raise 1
-
-    def status(self, id, code=0, app='null', link='null'):
-            if link == 'null':
-                protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-                hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-                port = environ.get('IAC_ENDPOINT_PORT')
-                uri = f'{protocol}://{hostname}:{port}'
-            else:
-                uri = f'{link}'
-            url = f'/resources/query/{id}?document=tagging'
-            # debugging
-            # print(url)
+    # STATUS
+    # SET STATUS OF DEPLOYMENT WITH SPECIFIC CONTROL STAGES 
+    def status(self, id, code=0):
+            url = f'{uri}/app/deployment{id}?state={code}'
             try:
-                if app == 'state':
-                    url = f'{uri}/resources/status/{id}?state={code}&application={app}'
-                else:
-                    url = f'{uri}/resources/status/{id}?state={code}'
                 response = requests.get(url)
                 if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
                     err = {'error': f'resource state, web {response.status_code}'}
@@ -91,124 +50,145 @@ class HttpFetch(object):
             except:
                 return 1
 
-    def state(self, id, res='null', link='null'):
-        
-        if link == 'null':
-            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-            port = environ.get('IAC_ENDPOINT_PORT')
-            uri = f'{protocol}://{hostname}:{port}'
-        else:
-            uri = f'{link}'
-        
-        url = f'{uri}/resources/query/{id}?document=state'
-        response = requests.get(url)
-        if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
-            err = {'error': f'resource query state, web {response.status_code}'}
-            raise Exception(err)
-        states = response.json()
+    # ABBR
+    # MATCHING DESCRIPTION
+    # KEY, PERIMETER 
+    # CONDITIONAL FOR DESCRIPTION EXAMPLE public
+    # RETURN SPECIFIC ELEMENT SEE DEFAULT, ELSE OBJECT
+    # ABBR NOT BE TREATED AS CONFIG
+    def abbr(self, key='null', description='null', element = 'elementLabel'):
         try:
-            if res == 'null':
-                return json.dumps(states, separators=(',',':'), indent=2)
-            else:
-                if states[res]:
-                    return states[res]
-        except KeyError as ke:
-            err = {'error': f'{id}, state keyError'}
-            raise KeyError(ke)
+            url = f'{uri}/svc/abbr?key={key}'
+            response = requests.get(url)
+            if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
+                err = {'error': f'web {response.status_code}'}
+                raise Exception(err)
+            # TO JSON
+            abbr = response.json()
+            if key != 'null':
+                for a in abbr:
+                    if a['description'] == description:
+                        # debugging
+                        # print('a =')
+                        # print(a)
+                        return a['elementLabel']
+                return abbr
+            return 1
+        except:
+            return 1
+
+    # DISCOVERY
+    # ELEMENT EXAMPLE Name
+    # ARGS EXAMPLE resourceType=s3 application=tfsta leafOrganization=sgti environment=pst state=6
+    # RETURN SPECIFIC ELEMENT EXAMPLE name
+    def discovery(self, id, resourceType='s3', element='null', *args):
+        # LABEL
+        # GET LABEL AND BUILD QUERY
+        label = f'{uri}/svc/label?resourceType={resourceType}'
+        response = requests.get(label)
+        js = response.json()
+        key = js['keyMap']
+        # print(key)
+
+        # TAG
+        # GET TAG FOR RESOURCE BEING DEPLOYED AND SELECT KEYS THAT ARE PRESENT
+        main = HttpFetch
+        tag = main.app(self, id)
+        js = json.loads(tag)
+        # BUILD QUERY STRING WITH ARGS
+        array = []
+        # USE LABEL AND KEY FROM ABOVE TO APPEND ARRAY
+        for t in js:
+            for k in key:
+                value = js[t][0][k]
+                # EXCLUDE PARAM AS REQUIRED BY QUERY STRING
+                if k != 'resourceType':
+                    array.append(f'{k}={value}')
+        # AMEND ARRAY AND ARGS 
+        if len(list(args)) > 0:
+            array = array + list(args)
+        # QUERY STRING
+        string = '&'.join(array)
+
+        # CONNECTOR 
+        # TODO NOT NECESSARY WITHIN QUERY STRING
+        # connector = f'{uri}/app{id}?document=connector'
+        # response = requests.get(connector)
+        # js = response.json()
+        # con = js['_id']
+
+        # DISCOVERY 
+        # BETWEEN ? ARRAY JOIN FROM ABOVE WITH ARGS AND STATE
+        discovery = f'{uri}/app/tag/discovery?resourceType={resourceType}&{string}'
+        response = requests.get(discovery)
+
+        if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
+            err = {'error': f'web {response.status_code}'}
+            raise Exception(err)
+
+        # TO JSON
+        js = response.json()
+        # print(js)
+        try:
+            return js[element]
+        except:
+            return json.dumps(js, separators=(',',':'), indent=2)
         return 1
 
-    def perimeter(self, id, element='', link='null'):
-        if link == 'null':
-            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-            port = environ.get('IAC_ENDPOINT_PORT')
-            uri = f'{protocol}://{hostname}:{port}'
-        else:
-            uri = f'{link}'
-        url = f'{uri}/resources/query/{id}?document=perimeter'
-        # debugging
-        # print(url)
-        response = requests.get(url)
-        if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
-            err = {'error': f'perimeter query, web {response.status_code}'}
-            raise Exception(err)
+    # OPEN FILE
+    # DEPLOYMENT ID FOR SPECIFIC FILE 
+    def openFile(self, id):
+        try:
+            with open(f'./{id}-output.json', 'r') as f:
+                load = f.read()
+                return json.loads(load)
+        except:
+            return 1
+        finally:
+            f.close()
 
-        perimeter = response.json()
-        if element != '':
-            try:
-                return json.dumps(perimeter['perimeter'][element])
-            except KeyError as ke:
-                return json.dumps(perimeter['perimeter']['default'])
-        elif perimeter:
-            return json.dumps(perimeter['perimeter'])
-        else:
-            raise 1
-
-    # TODO SEED MANY FUNC, FOR LOGICAL ID UPDATING, KEY IS THE RESOURCE ID WITHIN TERRAFORM, DES IS THE DESTINATION KEY ON THE API, RES IS THE RESOURCE ID ON THE API
-    def seedMany(self, deployId, key='', apiKey='', resId='', link='null'):
-        if link == 'null':
-            protocol = environ.get('IAC_ENDPOINT_PROTOCOL')
-            hostname = environ.get('IAC_ENDPOINT_HOSTNAME')
-            port = environ.get('IAC_ENDPOINT_PORT')
-            uri = f'{protocol}://{hostname}:{port}'
-        else:
-            uri = f'{link}'
-        # API URL
-        url = f'{uri}/resources/update/'
-        k = 0
-        ak = 0
-        ids = 0
-        data = None
+    # SEED 
+    # ID, DEPLOYMENT ID
+    # KEY, WITHIN FILE
+    # API KEY, WEB SERVICE KEY 
+    # RES ID, RESOURCE ID
+    def seed(self, id, document='resource', key='', apiKey=''):
+        
         try:
             # DEPLOYMENT ID FOR SPECIFIC FILE 
-            file = open(f'./{deployId}-output.json', 'r').read()
-            load = json.loads(file)
+            main = HttpFetch
+            load = main.openFile(self, id)
             # TRY MATCH KEYS WITH JSON FILE
             try:
                 # TERRAFORM FILE KEY 
-                k = load[key]['value']
-                # API TARGET KEY 
-                ak = apiKey
-                # THE ITERATOR 
-                ids = load[resId]['value']
-                if (len(k) > 0):
-                    data = {
-                        ak: k
-                    }
+                load = load[key]['value']
             except KeyError as ke:
                 err = {'error': f'{id}, KeyError {ke}'}
                 print(err)
                 return 1
-        except FileNotFoundError as fe:
-            err = {'error': f'{id}, FileNotFoundError {fe}'}
-            print(err)
-            return 1
-        # debugging
-        # print("data =")
-        # print(data)
-        # print("ids =")
-        # print(ids)
-        # print("url =")
-        # print(url)
-        array = ids.split(';')
-        # debugging
-        # print("array =")
-        # print(array)
-        if array:
-            for a in array:
-                i = a
-                d = data[ak][a]
+            # debugging
+            # print('load=')
+            # print(load)
+            # UPDATE DOCUMENT
+            # BUILD BODY WITH API KEY 
+            # USE THE DEPLOYMENT ID TO SERVE THE WHOLE DEPLOYMENT 
+            # USE THE ID WITHIN LOAD AS THE ID AND THE VALUE WILL BE ADDED THE BODY WITH THE API KEY PARAM
+            for key in load:
+                url = f'{uri}/app{key}?document={document}'
                 # debugging
-                # print("array loop =")
-                # print(i)
-                # print(d)
-                response = requests.patch(f'{url}{i}', json={ak: d})
-            if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
-                err = {'error': f'resource seed, web {response.status_code}'}
-                raise Exception(err)
-            return 0
-        else:
+                # print('url =')
+                # print(url)
+                body = {apiKey: load[key]}
+                # debugging
+                # print('body =')
+                # print(body)
+                response = requests.patch(url, json=body)
+                if response.status_code != 200 and response.status_code != 201 and response.status_code != 202:
+                    err = {'error': f'web {response.status_code}'}
+                    raise Exception(err)
+                return 0
+        except Exception as e:
+            print(e)
             return 1
  
 

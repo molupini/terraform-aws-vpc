@@ -14,7 +14,3 @@ output "aws_subnet_subnet_cidr_block" {
 output "aws_subnet_tags" {
   value = "${data.aws_subnet.subnet.*.tags}"
 }
-# COMMENT OUT WHEN DONE TESTING
-# output "aws_subnet_all" {
-#   value = "${data.aws_subnet.subnet.*}"
-# }
