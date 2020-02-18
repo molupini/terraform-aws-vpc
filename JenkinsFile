@@ -1,11 +1,10 @@
-def refresh = false
 pipeline{
     options {
         buildDiscarder(logRotator(numToKeepStr: '2', daysToKeepStr: '1', artifactDaysToKeepStr: '3', artifactNumToKeepStr: '4'))
     }
     agent any
     parameters {
-        string(name: "deploymentId", defaultValue: "5dbadb1a7bc9d7001e92ee2d", description: 'DeploymentId, Group Resources/Configuration and Tagging', trim: true)
+        string(name: "deploymentId", defaultValue: "5e468fc5240d850025a8661e", description: 'DeploymentId, Group Resources/Configuration and Tagging', trim: true)
     }
     environment{
         AWS_ACCESS_KEY = credentials("AWS_ACCESS_KEY")
@@ -21,15 +20,14 @@ pipeline{
                 dir("./"){
                     script{
                         try {
-                            def file ="./tfvpc/vpc.tf"
+                            def file ="./terraform-aws-vpc/vpc.tf"
                             def fileFound = fileExists(file)
                             println("vpc.tf, exists = ${fileFound}")
                             if(!fileFound){
-                                sh "rm -R ./tfvpc/ -f"
+                                sh "rm -R ./terraform-aws-vpc/ -f"
                             } 
                             sh "git init"
-                            sh "git config remote.origin.url git@gitlab.com:bcx-sanlam-group/tfvpc.git"
-                            sh "git clone git@gitlab.com:bcx-sanlam-group/tfvpc.git" 
+                            sh "git clone https://github.com/molupini/terraform-aws-vpc.git"
                         } catch (Exception err){
                             println(err)
                             throw new Exception("Unable to perform clone, try again!")
@@ -41,43 +39,37 @@ pipeline{
         stage("Init"){
             steps{
                 echo "======== Executing Init ========"
-                dir("./tfvpc/bin"){
+                dir("./terraform-aws-vpc/bin"){
                     script{
                         try { 
-                            // PARAMS
-                            def s3 = sh(script: "python3 ./util/helper.py state ${params.deploymentId} S3", returnStdout: true)
-                            def dyn = sh(script: "python3 ./util/helper.py state ${params.deploymentId} DYN", returnStdout: true)
-                            s3 = 'bucket=' + s3.replaceAll("\\s","")
-                            dyn = 'dynamodb_table=' + dyn.replaceAll("\\s","")
-                            // debugging
-                            // println("variables =")
-                            // println(s3)
-                            // println(dyn)
                             // CACHE PLUG-INS
                             def file = "../../.terraform/plugins/linux_amd64/lock.json"
                             def fileFound = fileExists(file)
                             println("lock.json, exists = ${fileFound}")
-
                             if(fileFound){
-                                sh "terraform init \
+                                sh(script: """
+                                terraform init \
                                 -input=false \
-                                -backend-config='access_key=${AWS_ACCESS_KEY}' \
-                                -backend-config='secret_key=${AWS_SECRET_KEY}' \
-                                -backend-config='region=${AWS_REGION}' \
-                                -backend-config='${s3}' \
-                                -backend-config='${dyn}' \
+                                -backend-config="access_key=${AWS_ACCESS_KEY}" \
+                                -backend-config="secret_key=${AWS_SECRET_KEY}" \
+                                -backend-config="region=${AWS_REGION}" \
+                                -backend-config="bucket=`python3 ./util/helper.py discovery ${params.deploymentId} s3 Name application=tfsta state=6`" \
+                                -backend-config="dynamodb_table=`python3 ./util/helper.py discovery ${params.deploymentId} dyn Name application=tfsta state=6`"
                                 -reconfigure \
                                 -plugin-dir ../../.terraform/plugins/linux_amd64"
+                                """)
                             } 
                             else {
-                                sh "terraform init \
+                                sh(script: """
+                                terraform init \
                                 -input=false \
-                                -backend-config='access_key=${AWS_ACCESS_KEY}' \
-                                -backend-config='secret_key=${AWS_SECRET_KEY}' \
-                                -backend-config='region=${AWS_REGION}' \
-                                -backend-config='${s3}' \
-                                -backend-config='${dyn}' \
-                                -reconfigure"
+                                -backend-config="access_key=${AWS_ACCESS_KEY}" \
+                                -backend-config="secret_key=${AWS_SECRET_KEY}" \
+                                -backend-config="region=${AWS_REGION}" \
+                                -backend-config="bucket=`python3 ./util/helper.py discovery ${params.deploymentId} s3 Name application=tfsta state=6`" \
+                                -backend-config="dynamodb_table=`python3 ./util/helper.py discovery ${params.deploymentId} dyn Name application=tfsta state=6`" \
+                                -reconfigure
+                                """)
                                 sh "cp -r ./.terraform/ ../../"
                             }
                             sh "python3 ./util/helper.py status ${params.deploymentId} 1"
@@ -93,7 +85,7 @@ pipeline{
             steps{
                 // VERIFY WORKING HCL / TERRAFORM SOURCE CODE 
                 echo "======== Executing Validation ========"
-                dir("./tfvpc/bin"){
+                dir("./terraform-aws-vpc/bin"){
                     script{
                         try { 
                             sh "terraform validate"
@@ -109,7 +101,7 @@ pipeline{
             steps{
                 // VERIFY IF WORKSPACE EXISTS IF NOT THEN CREATE
                 echo "======== Executing Workspace ========"
-                dir("./tfvpc/bin"){
+                dir("./terraform-aws-vpc/bin"){
                     script{
                         try { 
                             sh "terraform workspace select ${params.deploymentId}_tfvpc"
@@ -123,16 +115,19 @@ pipeline{
         stage("Plan"){
             steps{
                 echo "======== Executing Plan ========"
-                dir("./tfvpc/bin"){
+                dir("./terraform-aws-vpc/bin"){
                     script{
-                        try { 
-                            sh "terraform plan \
-                            -var 'id=${params.deploymentId}' \
-                            -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                            -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                            -var 'aws_region=${AWS_REGION}' \
-                            -out apply.tfplan"
-                            sh "terraform show apply.tfplan"
+                        try {
+                            sh(script: """
+                            terraform plan \
+                            -var "aws_access_key=${AWS_ACCESS_KEY}" \
+                            -var "aws_secret_key=${AWS_SECRET_KEY}" \
+                            -var "aws_region=${AWS_REGION}" \
+                            -var "vpc=`python3 ./util/helper.py app ${params.deploymentId} tag vpc`" \
+                            -var "publicSuffix=`python3 ./util/helper.py abbr perimeter public`" \
+                            -var "privateSuffix=`python3 ./util/helper.py abbr perimeter private`" \
+                            -out apply.tfplan
+                            """)
                             sh "python3 ./util/helper.py status ${params.deploymentId} 3"
                         } catch (Exception err){
                             println(err)
@@ -155,15 +150,18 @@ pipeline{
                         input message: "Confirm Apply", ok: "Apply Config"
                         apply = true
                     } catch (Exception er) {
-                        dir("./tfvpc/bin"){
+                        dir("./terraform-aws-vpc/bin"){
                             // PLAN DESTROY
-                            sh "terraform plan -destroy \
-                            -var 'id=${params.deploymentId}' \
-                            -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                            -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                            -var 'aws_region=${AWS_REGION}' \
-                            -out destroy.tfplan"
-                            sh "terraform show destroy.tfplan"
+                            sh(script: """
+                            terraform plan -destroy \
+                            -var "aws_access_key=${AWS_ACCESS_KEY}" \
+                            -var "aws_secret_key=${AWS_SECRET_KEY}" \
+                            -var "aws_region=${AWS_REGION}" \
+                            -var "vpc=`python3 ./util/helper.py app ${params.deploymentId} tag vpc`" \
+                            -var "publicSuffix=`python3 ./util/helper.py abbr perimeter public`" \
+                            -var "privateSuffix=`python3 ./util/helper.py abbr perimeter private`" \
+                            -out destroy.tfplan
+                            """)
                             // APPLY DESTROY
                             try {
                                 input message: "Confirm Destroy", ok: "Destroy Config"
@@ -182,47 +180,20 @@ pipeline{
                     // # APPLY - TRUE, BUILD
                     // IF ANY ERROR IN CATCH FORCE REFRESH
                     if(apply){
-                        dir("./tfvpc/bin"){
+                        dir("./terraform-aws-vpc/bin"){
                             try {
                                 // APPLY
                                 sh "terraform apply apply.tfplan"
-                                // STORE VPC ID FOR GET_SUBNETS MODULE 
-                                def vpc = sh(script: "terraform output logicalId", Stdout: true)
-                                // println("vpc, logicalId =")
-                                // println(vpc)
                                 sh "python3 ./util/helper.py status ${params.deploymentId} 6"
-                                
                                 // SEED
                                 sh "terraform output -json > ${params.deploymentId}-output.json"
-                                sh "python3 ./util/helper.py seedMany ${deploymentId} aws_vpc_id logicalId vpc_resourceId"
+                                sh "python3 ./util/helper.py seed ${params.deploymentId}  resource aws_vpc_id logicalId"
                             } catch (Exception err) {
-                                refresh = true
+                                println(err)
+                                throw new Exception("Unable perform apply, try again!")
+                                sh "python3 ./util/helper.py status ${params.deploymentId} 4"
                             }
                         } 
-                    }
-                }
-            }
-        }
-        // TODO VERIFY IF NECESSARY
-        stage("Refresh"){
-            steps{
-                echo "======== Executing Refresh ========"
-                dir("./tfvpc/bin"){
-                    script{
-                        try { 
-                            println("refresh = ${refresh}")
-                            if(refresh){
-                                sh "terraform refresh \
-                                -var 'id=${params.deploymentId}' \
-                                -var 'aws_access_key=${AWS_ACCESS_KEY}' \
-                                -var 'aws_secret_key=${AWS_SECRET_KEY}' \
-                                -var 'aws_region=${AWS_REGION}'"
-                                currentBuild.result = "UNSTABLE"
-                            } 
-                        } catch (Exception err){
-                            println(err)
-                            throw new Exception("Unable to perform refresh, try again!")
-                        }
                     }
                 }
             }
